@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YieldSense — Prediction History</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --panel:     #1c2333;
+      --border:    rgba(255,255,255,0.07);
+      --border-hi: rgba(255,255,255,0.14);
+      --green:     #3fb950;
+      --green-dim: rgba(63,185,80,0.12);
+      --teal:      #39d4c1;
+      --amber:     #e3b341;
+      --red:       #f85149;
+      --text:      #e6edf3;
+      --muted:     #7d8590;
+      --r:         14px;
+      --r-lg:      20px;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .bg-blobs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.1; }
+    .blob-1 { width: 500px; height: 500px; background: #3fb950; top: -150px; right: -100px; }
+    .blob-2 { width: 350px; height: 350px; background: #39d4c1; bottom: -100px; left: -80px; }
+
+    .page {
+      position: relative; z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 0 48px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #3fb950, #39d4c1);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text { font-size: 18px; font-weight: 700; color: var(--text); }
+    .logo-text span { color: var(--green); }
+
+    .btn-back {
+      display: flex; align-items: center; gap: 7px;
+      padding: 9px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border-hi);
+      border-radius: 100px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px; font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-back:hover { border-color: var(--green); color: var(--green); }
+
+    .page-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 28px; flex-wrap: wrap; gap: 16px;
+      animation: fadeUp 0.5s 0.05s ease both;
+    }
+
+    .page-title { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+    .page-title span { color: var(--green); }
+    .page-sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+    .btn-clear {
+      display: flex; align-items: center; gap: 6px;
+      padding: 9px 18px;
+      background: rgba(248,81,73,0.1);
+      border: 1px solid rgba(248,81,73,0.25);
+      border-radius: var(--r);
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px; font-weight: 600;
+      color: var(--red);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-clear:hover { background: rgba(248,81,73,0.2); }
+
+    /* Stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 20px 22px;
+    }
+
+    .stat-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+    .stat-val.green { color: var(--green); }
+    .stat-val.teal  { color: var(--teal); }
+    .stat-val.amber { color: var(--amber); }
+    .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Empty */
+    .empty {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 64px 32px;
+      text-align: center;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+
+    .empty-icon  { font-size: 48px; margin-bottom: 16px; }
+    .empty-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .empty-sub   { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+
+    .btn-go {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 12px 24px;
+      background: var(--green);
+      border-radius: var(--r);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px; font-weight: 700;
+      color: #0d1117;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-go:hover { background: #56d364; transform: translateY(-1px); }
+
+    /* Table */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      animation: fadeUp 0.5s 0.15s ease both;
+    }
+
+    .table-scroll { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+    thead tr {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border-hi);
+    }
+
+    th {
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 11px; font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.025); }
+
+    td { padding: 14px 16px; white-space: nowrap; }
+
+    .crop-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 11px;
+      background: var(--panel);
+      border: 1px solid var(--border-hi);
+      border-radius: 100px;
+      font-size: 12px; font-weight: 600;
+    }
+
+    .yield-val { font-size: 15px; font-weight: 700; color: var(--green); }
+    .country-text { font-weight: 600; }
+    .meta-text { color: var(--muted); font-size: 13px; }
+
+    .btn-delete {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px;
+      background: transparent;
+      border: 1px solid var(--border-hi);
+      border-radius: 7px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .btn-delete:hover {
+      background: rgba(248,81,73,0.12);
+      border-color: rgba(248,81,73,0.4);
+      color: var(--red);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .page-title { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-blobs">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+</div>
+
+<div class="page">
+
+  <nav class="nav">
+    <a href="/" class="logo">
+      <div class="logo-icon">🌾</div>
+      <span class="logo-text">Yield<span>Sense</span></span>
+    </a>
+    <a href="/" class="btn-back">← Back to Predictor</a>
+  </nav>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Prediction <span>History</span></h1>
+      <p class="page-sub">All your past crop yield predictions, saved automatically.</p>
+    </div>
+    {% if rows %}
+    <a href="/clear" class="btn-clear" onclick="return confirm('Clear all history? This cannot be undone.')">
+      🗑 Clear All
+    </a>
+    {% endif %}
+  </div>
+
+  {% if rows %}
+
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-val green">{{ rows|length }}</div>
+      <div class="stat-lbl">Total Predictions</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val teal">{{ rows[0][7] }}</div>
+      <div class="stat-lbl">Latest Yield (hg/ha)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val amber">{{ rows[0][2] }}</div>
+      <div class="stat-lbl">Latest Crop</div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Country</th>
+            <th>Crop</th>
+            <th>Year</th>
+            <th>Rainfall</th>
+            <th>Temp</th>
+            <th>Pesticides</th>
+            <th>Predicted Yield</th>
+            <th>Date &amp; Time</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td class="meta-text">{{ loop.index }}</td>
+            <td><span class="country-text">{{ row[1] }}</span></td>
+            <td>
+              <span class="crop-pill">
+                {% if row[2] == 'Wheat' %}🌾
+                {% elif row[2] == 'Rice' %}🍚
+                {% elif row[2] == 'Maize' %}🌽
+                {% elif row[2] == 'Barley' %}🌿
+                {% elif row[2] == 'Cotton' %}🧶
+                {% else %}🌱{% endif %}
+                {{ row[2] }}
+              </span>
+            </td>
+            <td class="meta-text">{{ row[3] }}</td>
+            <td class="meta-text">{{ row[4] }} mm</td>
+            <td class="meta-text">{{ row[6] }} °C</td>
+            <td class="meta-text">{{ row[5] }} t</td>
+            <td>
+              <span class="yield-val">{{ row[7] }}</span>
+              <span class="meta-text" style="font-size:11px;"> hg/ha</span>
+            </td>
+            <td class="meta-text">{{ row[8] }}</td>
+            <td>
+              <a href="/delete/{{ row[0] }}" class="btn-delete"
+                 title="Delete this entry"
+                 onclick="return confirm('Delete this entry?')">✕</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% else %}
+
+  <div class="empty">
+    <div class="empty-icon">📭</div>
+    <div class="empty-title">No predictions yet</div>
+    <div class="empty-sub">Run your first crop yield prediction and it will appear here automatically.</div>
+    <a href="/" class="btn-go">Make a Prediction →</a>
+  </div>
+
+  {% endif %}
+
+</div>
+</body>
+</html>
