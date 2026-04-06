@@ -1,5 +1,4 @@
 # 🌾 Crop Yield Prediction Using Machine Learning
-
 ## 📌 Project Overview
 
 This project is a Machine Learning based web application that predicts crop yield based on various environmental and agricultural factors.
